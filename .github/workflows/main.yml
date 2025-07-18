@@ -1,0 +1,21 @@
+name: Build & Push Divine Quantum
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Tencent TCR
+        uses: docker/login-action@v3
+        with:
+          registry: ccr.ccs.tencentyun.com
+          username: ${{ secrets.TCR_USER }}
+          password: ${{ secrets.TCR_PASS }}
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ccr.ccs.tencentyun.com/davidkonradov/divine-quantum:latest
+          
