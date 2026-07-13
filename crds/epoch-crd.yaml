@@ -1,0 +1,38 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: epochs.infra.example.com
+spec:
+  group: infra.example.com
+  names:
+    plural: epochs
+    singular: epoch
+    kind: Epoch
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: ["spec"]
+          properties:
+            spec:
+              type: object
+              required: ["epochID", "startTime"]
+              properties:
+                epochID:
+                  type: string
+                startTime:
+                  type: string
+                  format: date-time
+                description:
+                  type: string
+                plannedChanges:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+      subresources:
+        status: {}

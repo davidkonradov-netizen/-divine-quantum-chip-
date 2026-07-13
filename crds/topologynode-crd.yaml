@@ -1,0 +1,57 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: topologynodes.infra.example.com
+spec:
+  group: infra.example.com
+  names:
+    plural: topologynodes
+    singular: topologynode
+    kind: TopologyNode
+    shortNames:
+      - tnode
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: ["spec"]
+          properties:
+            spec:
+              type: object
+              required: ["topologyID", "publicKey", "generation", "epoch"]
+              properties:
+                topologyID:
+                  type: string
+                publicKey:
+                  type: string
+                generation:
+                  type: integer
+                epoch:
+                  type: integer
+                parent:
+                  type: string
+                lineage:
+                  type: array
+                  items:
+                    type: string
+                geometry:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    coords:
+                      type: array
+                      items:
+                        type: number
+                capabilities:
+                  type: object
+                  additionalProperties: true
+                metadata:
+                  type: object
+                  additionalProperties: true
+      subresources:
+        status: {}

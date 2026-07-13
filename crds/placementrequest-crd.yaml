@@ -1,0 +1,72 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: placementrequests.infra.example.com
+spec:
+  group: infra.example.com
+  names:
+    plural: placementrequests
+    singular: placementrequest
+    kind: PlacementRequest
+    shortNames:
+      - preq
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: ["spec"]
+          properties:
+            spec:
+              type: object
+              required: ["jobID", "resources"]
+              properties:
+                jobID:
+                  type: string
+                resources:
+                  type: object
+                  required: ["cpu", "memGiB"]
+                  properties:
+                    cpu:
+                      type: number
+                    memGiB:
+                      type: number
+                    gpus:
+                      type: integer
+                    tpus:
+                      type: integer
+                    neuromorphic:
+                      type: array
+                      items:
+                        type: string
+                geometryAffinity:
+                  type: object
+                  properties:
+                    geometry:
+                      type: string
+                    coords:
+                      type: array
+                      items:
+                        type: number
+                    radius:
+                      type: number
+                costWeights:
+                  type: object
+                  additionalProperties:
+                    type: number
+                hardConstraints:
+                  type: array
+                  items:
+                    type: string
+                softConstraints:
+                  type: array
+                  items:
+                    type: string
+                placementMode:
+                  type: string
+                  enum: ["best-effort","strict","batch"]
+      subresources:
+        status: {}
