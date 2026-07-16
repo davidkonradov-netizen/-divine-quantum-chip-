@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: patrones-with-pvc
+  namespace: workloads
+  annotations:
+    infra.example.com/generate-patterns: "true"
+    infra.example.com/patterns: "abacaba,sierpinski,penrose,quaternion"
+spec:
+  restartPolicy: Never
+  volumes:
+    - name: output
+      persistentVolumeClaim:
+        claimName: patrones-output-pvc
+  initContainers:
+    - name: generar-patrones
+      # Replace the image with the registry image produced by CI, e.g. ghcr.io/<owner>/patrones-matematicos:latest
+      image: patrones-matematicos:local
+      command: ["python", "/app/patrones.py", "--output-dir", "/output", "--patterns", "abacaba,sierpinski,penrose,quaternion", "--sierpinski-order", "5", "--penrose-level", "3", "--quat-n", "64"]
+      volumeMounts:
+        - name: output
+          mountPath: /output
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+  containers:
+    - name: sleeper
+      image: busybox
+      command: ["sh", "-c", "ls -la /output; sleep 3600"]
+      volumeMounts:
+        - name: output
+          mountPath: /output
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
