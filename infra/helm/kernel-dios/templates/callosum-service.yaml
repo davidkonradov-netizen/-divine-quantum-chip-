@@ -1,0 +1,59 @@
+{{- if .Values.hemisphere.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hemisphere-topology
+  namespace: {{ .Release.Namespace }}
+data:
+  cluster-topology.json: |
+    {{- .Values.hemisphere.topology | toJson | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: site-node-l
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterIP: None
+  selector:
+    component: hemisphere
+    side: left
+  ports:
+    - { name: site, port: 7777, targetPort: site }
+    - { name: callosum-0, port: 7778, targetPort: callosum-0 }
+    - { name: callosum-1, port: 7779, targetPort: callosum-1 }
+    - { name: callosum-2, port: 7780, targetPort: callosum-2 }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hemisphere-sa
+  namespace: {{ .Release.Namespace }}
+automountServiceAccountToken: false
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hemisphere-isolation
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      component: hemisphere
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { component: hemisphere } }
+        - podSelector: { matchLabels: { component: control-plane } }
+      ports:
+        - { protocol: TCP, port: 7777 }
+        - { protocol: TCP, port: 7778 }
+        - { protocol: TCP, port: 7779 }
+        - { protocol: TCP, port: 7780 }
+  egress:
+    - to:
+        - podSelector: { matchLabels: { component: hemisphere } }
+        - podSelector: { matchLabels: { component: control-plane } }
+        - podSelector: { matchLabels: { app: nats } }
+        - podSelector: { matchLabels: { app: postgres } }
+{{- end }}
