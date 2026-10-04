@@ -1,0 +1,16 @@
+hemisphere:
+  enabled: true
+  sites: 12
+  topology:
+    # Rellenar con la salida de `python -m hemisphere.icosahedron`
+    nodes: {}
+  callosum:
+    domains: 3
+    n_fibers: 169
+    max_isolated: 2
+  pki:
+    secretName: hemisphere-pki
+    rogueDetect: true
+  roles:
+    antípodalPairs: true
+    assignments: {}  # calculado por assign_roles() en runtime
