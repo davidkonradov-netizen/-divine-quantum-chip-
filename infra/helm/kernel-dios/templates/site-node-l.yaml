@@ -1,0 +1,73 @@
+{{- if .Values.hemisphere.enabled }}
+{{- range $i := until (int .Values.hemisphere.sites) }}
+{{- $site := printf "V%d" (add $i 1) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site-{{ lower $site }}-l
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "kernel-dios.labels" $ | nindent 4 }}
+    component: hemisphere
+    site: {{ $site }}
+    side: left
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: hemisphere
+      site: {{ $site }}
+      side: left
+  template:
+    metadata:
+      labels:
+        component: hemisphere
+        site: {{ $site }}
+        side: left
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: hemisphere-sa
+      containers:
+        - name: site-node
+          image: "{{ $.Values.global.imageRegistry }}/leaf-node:{{ $.Chart.AppVersion }}"
+          command: ["python", "-m", "hemisphere.site_node"]
+          env:
+            - name: NODE_ID
+              value: "{{ $site }}"
+            - name: SIDE
+              value: "L"
+            - name: PKI_DIR
+              value: "/pki"
+            - name: TOPOLOGY_FILE
+              value: "/etc/hemisphere/cluster-topology.json"
+            - name: ENDPOINTS_FILE
+              value: "/etc/hemisphere/endpoints.json"
+            - name: HOST
+              value: "0.0.0.0"
+          ports:
+            - { name: site, containerPort: 7777 }
+            - { name: callosum-0, containerPort: 7778 }
+            - { name: callosum-1, containerPort: 7779 }
+            - { name: callosum-2, containerPort: 7780 }
+            - { name: metrics, containerPort: 9090 }
+          volumeMounts:
+            - { name: pki, mountPath: /pki, readOnly: true }
+            - { name: topo, mountPath: /etc/hemisphere, readOnly: true }
+          resources:
+            requests: { cpu: "200m", memory: "512Mi" }
+            limits:   { cpu: "1000m", memory: "2Gi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+      volumes:
+        - name: pki
+          secret: { secretName: hemisphere-pki }
+        - name: topo
+          configMap: { name: hemisphere-topology }
+{{- end }}
+{{- end }}
