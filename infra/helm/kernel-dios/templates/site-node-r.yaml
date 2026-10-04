@@ -1,0 +1,54 @@
+{{- if .Values.hemisphere.enabled }}
+{{- range $i := until (int .Values.hemisphere.sites) }}
+{{- $site := printf "V%d" (add $i 1) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site-{{ lower $site }}-r
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "kernel-dios.labels" $ | nindent 4 }}
+    component: hemisphere
+    site: {{ $site }}
+    side: right
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: hemisphere
+      site: {{ $site }}
+      side: right
+  template:
+    metadata:
+      labels:
+        component: hemisphere
+        site: {{ $site }}
+        side: right
+    spec:
+      serviceAccountName: hemisphere-sa
+      containers:
+        - name: commissural-server
+          image: "{{ $.Values.global.imageRegistry }}/leaf-node:{{ $.Chart.AppVersion }}"
+          command: ["python", "-m", "hemisphere.callosum", "--role=server", "--site={{ $site }}"]
+          env:
+            - name: SITE_ID
+              value: "{{ $site }}"
+            - name: PKI_DIR
+              value: "/pki"
+            - name: HOST
+              value: "0.0.0.0"
+          ports:
+            - { name: dom-0, containerPort: 7800 }
+            - { name: dom-1, containerPort: 7801 }
+            - { name: dom-2, containerPort: 7802 }
+          volumeMounts:
+            - { name: pki, mountPath: /pki, readOnly: true }
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "1Gi" }
+      volumes:
+        - name: pki
+          secret: { secretName: hemisphere-pki }
+{{- end }}
+{{- end }}
